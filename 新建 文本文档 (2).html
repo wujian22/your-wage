@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时工资计算器</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', Arial, sans-serif;
+            background: linear-gradient(120deg, #e0e7ef 0%, #f8fafc 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 360px;
+            text-align: center;
+        }
+        h2 { margin-bottom: 20px; color: #1976d2; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; color: #555; }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            outline: none;
+        }
+        input:focus { border-color: #1976d2; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        button:hover { background: #1565c0; }
+        
+        /* 结果展示区 */
+        .result-area {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f1f8fe;
+            border-radius: 10px;
+            display: none; /* 默认隐藏，点击计算后显示 */
+        }
+        .current-earn {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e76f51;
+            margin-bottom: 15px;
+        }
+        .detail-item {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>💰 实时工资计算器</h2>
+    
+    <div class="input-group">
+        <label for="monthlySalary">月薪 (元)</label>
+        <input type="number" id="monthlySalary" placeholder="例如: 10000" value="10000">
+    </div>
+    
+    <div class="input-group">
+        <label for="workDays">每月工作天数</label>
+        <input type="number" id="workDays" placeholder="例如: 22" value="22">
+    </div>
+    
+    <div class="input-group">
+        <label for="workHours">每日工作小时数</label>
+        <input type="number" id="workHours" placeholder="例如: 8" value="8">
+    </div>
+    
+    <button onclick="startCalculator()">开始上班</button>
+    
+    <div class="result-area" id="resultArea">
+        <div class="current-earn" id="currentEarn">0.00 块</div>
+        <div class="detail-item">⏱️ 已工作时间: <span id="workedTime">00:00:00</span></div>
+        <div class="detail-item">⚡ 秒薪: <span id="secondWage">0.00</span> 块/秒</div>
+        <div class="detail-item">🕒 时薪: <span id="hourlyWage">0.00</span> 块/小时</div>
+    </div>
+</div>
+
+<script>
+    let timer = null;
+    let startTimestamp = null;
+    let secondWage = 0;
+
+    function startCalculator() {
+        // 清除之前的定时器
+        if (timer) clearInterval(timer);
+        
+        const salary = parseFloat(document.getElementById('monthlySalary').value);
+        const days = parseFloat(document.getElementById('workDays').value);
+        const hours = parseFloat(document.getElementById('workHours').value);
+        
+        // 简单的输入验证
+        if (isNaN(salary) || isNaN(days) || isNaN(hours) || salary <= 0 || days <= 0 || hours <= 0) {
+            alert("请输入有效的正数参数！");
+            return;
+        }
+        
+        // 核心计算逻辑：日薪 = 月薪 / 天数，时薪 = 日薪 / 小时，秒薪 = 时薪 / 3600
+        const hourlyWage = (salary / days) / hours;
+        secondWage = hourlyWage / 3600;
+        
+        // 更新界面显示并展示结果区
+        document.getElementById('hourlyWage').textContent = hourlyWage.toFixed(4);
+        document.getElementById('secondWage').textContent = secondWage.toFixed(4);
+        document.getElementById('resultArea').style.display = 'block';
+        
+        // 记录开始时间并启动每秒刷新
+        startTimestamp = Date.now();
+        updateEarnings(); // 立即执行一次
+        timer = setInterval(updateEarnings, 1000); 
+    }
+    
+    function updateEarnings() {
+        const elapsedSeconds = Math.floor((Date.now() - startTimestamp) / 1000);
+        
+        // 格式化已工作时间 (HH:MM:SS)
+        const h = String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0');
+        const m = String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0');
+        const s = String(elapsedSeconds % 60).padStart(2, '0');
+        document.getElementById('workedTime').textContent = `${h}:${m}:${s}`;
+        
+        // 计算当前总收益并保留两位小数
+        const currentTotal = (secondWage * elapsedSeconds).toFixed(2);
+        document.getElementById('currentEarn').textContent = `${currentTotal} 块`;
+    }
+</script>
+
+</body>
+</html>
